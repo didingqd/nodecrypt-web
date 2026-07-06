@@ -106,6 +106,23 @@ export function joinRoom(userName, roomName, password, modal = null, onResult) {
 	if (sidebarUsername) sidebarUsername.textContent = userName;
 	setSidebarAvatar(userName);
 	let closed = false;
+	const cleanupPendingRoom = () => {
+		const roomIndex = roomsData.indexOf(newRd);
+		if (roomIndex < 0) return;
+		const chatInst = roomsData[roomIndex].chat;
+		if (chatInst && typeof chatInst.destruct === 'function') {
+			chatInst.destruct()
+		} else if (chatInst && typeof chatInst.disconnect === 'function') {
+			chatInst.disconnect()
+		}
+		roomsData.splice(roomIndex, 1);
+		if (activeRoomIndex === roomIndex) {
+			activeRoomIndex = roomsData.length ? 0 : -1;
+		}
+		if (roomsData.length && activeRoomIndex >= 0) {
+			switchRoom(activeRoomIndex);
+		}
+	};
 	const callbacks = {
 		onServerClosed: () => {
 			setStatus('Node connection closed');
@@ -113,7 +130,14 @@ export function joinRoom(userName, roomName, password, modal = null, onResult) {
 				closed = true;
 				onResult(false)
 			}
-		},		onServerSecured: () => {
+		},
+		onServerRejected: (reason) => {
+			if (closed) return;
+			closed = true;
+			cleanupPendingRoom();
+			if (onResult) onResult(false, { reason })
+		},
+		onServerSecured: () => {
 			if (modal) modal.remove();
 			else {
 				const loginContainer = $id('login-container');

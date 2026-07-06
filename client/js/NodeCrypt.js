@@ -31,6 +31,7 @@ class NodeCrypt {
 		};
 		this.callbacks = {
 			onServerClosed: callbacks.onServerClosed || null,
+			onServerRejected: callbacks.onServerRejected || null,
 			onServerSecured: callbacks.onServerSecured || null,
 			onClientSecured: callbacks.onClientSecured || null,
 			onClientList: callbacks.onClientList || null,
@@ -44,6 +45,7 @@ class NodeCrypt {
 		}
 		this.serverKeys = null;
 		this.serverShared = null;
+		this.serverJoined = false;
 		this.credentials = null;
 		this.connection = null;
 		this.reconnect = null;
@@ -80,7 +82,8 @@ class NodeCrypt {
 			this.credentials = {
 				username: username,
 				channel: sha256(channel),
-				password: sha256(password)
+				password: sha256(password),
+				usernameHash: sha256(String(username || '').trim().toLowerCase())
 			}
 		} catch (error) {
 			this.logEvent('setCredentials', error, 'error');
@@ -100,6 +103,7 @@ class NodeCrypt {
 		this.stopPing();
 		this.serverKeys = null;
 		this.serverShared = null;
+		this.serverJoined = false;
 		this.channel = {};
 		try {
 			this.connection = new WebSocket(this.config.wsAddress);
@@ -130,6 +134,7 @@ class NodeCrypt {
 			debug: false,
 		};
 		this.callbacks.onServerClosed = null;
+		this.callbacks.onServerRejected = null;
 		this.callbacks.onServerSecured = null;
 		this.callbacks.onClientSecured = null;
 		this.callbacks.onClientList = null;
@@ -137,6 +142,7 @@ class NodeCrypt {
 		this.clientEc = null;
 		this.serverKeys = null;
 		this.serverShared = null;
+		this.serverJoined = false;
 		this.credentials = null;
 		this.connection.onopen = null;
 		this.connection.onmessage = null;
@@ -217,15 +223,9 @@ class NodeCrypt {
 					}, this.serverKeys.privateKey, 384)).slice(8, 40);
 					this.sendMessage(this.encryptServerMessage({
 						a: 'j',
-						p: this.credentials.channel
+						p: this.credentials.channel,
+						u: this.credentials.usernameHash
 					}, this.serverShared));
-					if (this.callbacks.onServerSecured) {
-						try {
-							this.callbacks.onServerSecured()
-						} catch (error) {
-							this.logEvent('onMessage-server-secured-callback', error, 'error')
-						}
-					}
 				}
 			} catch (error) {
 				this.logEvent('onMessage', error, 'error')
@@ -237,7 +237,44 @@ class NodeCrypt {
 		if (!this.isObject(serverDecrypted) || !this.isString(serverDecrypted.a)) {
 			return
 		}
+		if (serverDecrypted.a === 'e') {
+			this.credentials = null;
+			this.stopReconnect();
+			this.stopPing();
+			if (this.callbacks.onServerRejected) {
+				try {
+					this.callbacks.onServerRejected(serverDecrypted.c || serverDecrypted.p || 'server_rejected')
+				} catch (error) {
+					this.logEvent('onMessage-server-rejected-callback', error, 'error')
+				}
+			}
+			try {
+				if (this.connection) this.connection.close()
+			} catch (error) {
+				this.logEvent('onMessage-server-rejected-close', error, 'error')
+			}
+			return
+		}
+		if (serverDecrypted.a === 'j') {
+			if (!this.serverJoined && this.callbacks.onServerSecured) {
+				this.serverJoined = true;
+				try {
+					this.callbacks.onServerSecured()
+				} catch (error) {
+					this.logEvent('onMessage-server-secured-callback', error, 'error')
+				}
+			}
+			return
+		}
 		if (serverDecrypted.a === 'l' && this.isArray(serverDecrypted.p)) {
+			if (!this.serverJoined && this.callbacks.onServerSecured) {
+				this.serverJoined = true;
+				try {
+					this.callbacks.onServerSecured()
+				} catch (error) {
+					this.logEvent('onMessage-server-secured-callback', error, 'error')
+				}
+			}
 			try {
 				for (const clientId in this.channel) {
 					if (serverDecrypted.p.indexOf(clientId) < 0) {

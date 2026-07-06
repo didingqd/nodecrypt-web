@@ -147,6 +147,7 @@ export class ChatRoom {  constructor(state, env) {
       seen: getTime(),
       key: null,
       shared: null,
+      usernameHash: null,
       channel: null
     };
 
@@ -314,8 +315,25 @@ export class ChatRoom {  constructor(state, env) {
 
     try {
       const channel = decrypted.p;
+      const usernameHash = isString(decrypted.u) ? decrypted.u : '';
+
+      if (usernameHash && this.channels[channel]) {
+        const duplicate = this.channels[channel].some(member => {
+          const client = this.clients[member];
+          return this.isClientInChannel(client, channel) && client.usernameHash === usernameHash;
+        });
+        if (duplicate) {
+          this.sendMessage(this.clients[clientId].connection, encryptMessage({
+            a: 'e',
+            c: 'duplicate_username'
+          }, this.clients[clientId].shared));
+          this.closeConnection(this.clients[clientId].connection);
+          return;
+        }
+      }
 
       this.clients[clientId].channel = channel;
+      this.clients[clientId].usernameHash = usernameHash;
 
       if (!this.channels[channel]) {
         this.channels[channel] = [clientId];
@@ -323,6 +341,9 @@ export class ChatRoom {  constructor(state, env) {
         this.channels[channel].push(clientId);
       }
 
+      this.sendMessage(this.clients[clientId].connection, encryptMessage({
+        a: 'j'
+      }, this.clients[clientId].shared));
       this.broadcastMemberList(channel);
 
     } catch (error) {

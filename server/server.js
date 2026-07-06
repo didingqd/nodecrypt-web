@@ -110,6 +110,7 @@ wss.on('connection', (connection) => {
 		connection: connection,
 		seen: getTime(),
 		key: null,
+		usernameHash: null,
 		channel: null
 	};
 
@@ -306,8 +307,25 @@ const handleJoinChannel = (clientId, decrypted) => {
 
 	try {
 		const channel = decrypted.p;
+		const usernameHash = isString(decrypted.u) ? decrypted.u : '';
+
+		if (usernameHash && channels[channel]) {
+			const duplicate = channels[channel].some(member => {
+				const client = clients[member];
+				return isClientInChannel(client, channel) && client.usernameHash === usernameHash;
+			});
+			if (duplicate) {
+				sendMessage(clients[clientId].connection, encryptMessage({
+					a: 'e',
+					c: 'duplicate_username'
+				}, clients[clientId].shared));
+				closeConnection(clients[clientId].connection);
+				return;
+			}
+		}
 
 		clients[clientId].channel = channel;
+		clients[clientId].usernameHash = usernameHash;
 
 		if (!channels[channel]) {
 			channels[channel] = [clientId];
@@ -315,6 +333,9 @@ const handleJoinChannel = (clientId, decrypted) => {
 			channels[channel].push(clientId);
 		}
 
+		sendMessage(clients[clientId].connection, encryptMessage({
+			a: 'j'
+		}, clients[clientId].shared));
 		broadcastMemberList(channel);
 
 	} catch (error) {
