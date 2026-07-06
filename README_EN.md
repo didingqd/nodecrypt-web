@@ -27,6 +27,22 @@ Access http://localhost:80
 After cloning the project and installing dependencies, use `npm run dev` to start the development server.
 Use `npm run deploy` to deploy to Cloudflare Workers.
 
+### Protected Web Entry Path
+
+The Cloudflare Worker does not serve the web UI from the root path `/`; direct root visits return 404. The web UI is only available under the configured entry path. The default path is:
+
+```text
+/nodecrypt/
+```
+
+To change it, set this Cloudflare Worker environment variable:
+
+```text
+NODECRYPT_WEB_PATH=/your-secret-path
+```
+
+Then visit `https://your-domain/your-secret-path/`. Static assets and WebSocket connections follow the same path. Requests outside the configured path return 404.
+
 ## 📝 Project Introduction
 
 NodeCrypt is a truly end-to-end encrypted chat system that implements a complete zero-knowledge architecture. The entire system design ensures that servers, network intermediaries, and even system administrators cannot access any plaintext message content. All encryption and decryption operations are performed locally on the client side, with the server serving only as a blind relay for encrypted data.

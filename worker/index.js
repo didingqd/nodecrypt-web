@@ -1,25 +1,80 @@
 import { generateClientId, encryptMessage, decryptMessage, logEvent, isString, isObject, getTime } from './utils.js';
 
+function notFoundResponse() {
+  return new Response('404 Not Found', {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store'
+    }
+  });
+}
+
+function getWebPath(env) {
+  const rawPath = env && typeof env.NODECRYPT_WEB_PATH === 'string' ? env.NODECRYPT_WEB_PATH.trim() : '';
+  const path = rawPath || '/nodecrypt';
+  if (!path.startsWith('/') || path === '/') {
+    return '/nodecrypt';
+  }
+  return path.endsWith('/') ? path.slice(0, -1) : path;
+}
+
+function isAuthorizedPath(pathname, webPath) {
+  return pathname === webPath || pathname.startsWith(`${webPath}/`);
+}
+
+function redirectToDirectoryPath(request, url, webPath) {
+  if (url.pathname !== webPath) {
+    return null;
+  }
+
+  const targetUrl = new URL(request.url);
+  targetUrl.pathname = `${webPath}/`;
+  return Response.redirect(targetUrl.toString(), 308);
+}
+
+function stripWebPath(request, url, webPath) {
+  const assetPath = url.pathname.slice(webPath.length) || '/';
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = assetPath;
+  return new Request(assetUrl, request);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const webPath = getWebPath(env);
 
     // 处理WebSocket请求
     const upgradeHeader = request.headers.get('Upgrade');
-    if (upgradeHeader && upgradeHeader === 'websocket') {
+    if (upgradeHeader && upgradeHeader.toLowerCase() === 'websocket') {
+      if (!isAuthorizedPath(url.pathname, webPath)) {
+        return notFoundResponse();
+      }
       const id = env.CHAT_ROOM.idFromName('chat-room');
       const stub = env.CHAT_ROOM.get(id);
       return stub.fetch(request);
     }
 
+    if (!isAuthorizedPath(url.pathname, webPath)) {
+      return notFoundResponse();
+    }
+
+    const assetPathname = url.pathname.slice(webPath.length) || '/';
+
     // 处理API请求
-    if (url.pathname.startsWith('/api/')) {
+    if (assetPathname.startsWith('/api/')) {
       // ...API 逻辑...
       return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json" } });
     }
 
     // 其余全部交给 ASSETS 处理（自动支持 hash 文件名和 SPA fallback）
-    return env.ASSETS.fetch(request);
+    const directoryRedirect = redirectToDirectoryPath(request, url, webPath);
+    if (directoryRedirect) {
+      return directoryRedirect;
+    }
+
+    return env.ASSETS.fetch(stripWebPath(request, url, webPath));
   }
 };
 

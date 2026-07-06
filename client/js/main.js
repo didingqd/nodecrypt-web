@@ -83,7 +83,7 @@ import {	renderUserList,       // 渲染用户列表 / Render user list
 // 设置全局配置参数
 // Set global configuration parameters
 window.config = {
-	wsAddress: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`, // WebSocket 服务器地址 / WebSocket server address
+	wsAddress: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${window.location.pathname}`, // WebSocket 服务器地址 / WebSocket server address
 	//wsAddress: `wss://crypt.works`,
 	debug: true                       // 是否开启调试模式 / Enable debug mode
 };
