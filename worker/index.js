@@ -12,14 +12,18 @@ function notFoundResponse() {
 
 function getWebPath(env) {
   const rawPath = env && typeof env.NODECRYPT_WEB_PATH === 'string' ? env.NODECRYPT_WEB_PATH.trim() : '';
-  const path = rawPath || '/nodecrypt';
-  if (!path.startsWith('/') || path === '/') {
-    return '/nodecrypt';
+  if (!rawPath) {
+    return '';
   }
-  return path.endsWith('/') ? path.slice(0, -1) : path;
+
+  const normalized = rawPath.replace(/^\/+|\/+$/g, '');
+  return normalized ? `/${normalized}` : '';
 }
 
 function isAuthorizedPath(pathname, webPath) {
+  if (!webPath) {
+    return true;
+  }
   return pathname === webPath || pathname.startsWith(`${webPath}/`);
 }
 
@@ -34,6 +38,10 @@ function redirectToDirectoryPath(request, url, webPath) {
 }
 
 function stripWebPath(request, url, webPath) {
+  if (!webPath) {
+    return request;
+  }
+
   const assetPath = url.pathname.slice(webPath.length) || '/';
   const assetUrl = new URL(request.url);
   assetUrl.pathname = assetPath;

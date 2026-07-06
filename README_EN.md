@@ -29,19 +29,19 @@ Use `npm run deploy` to deploy to Cloudflare Workers.
 
 ### Protected Web Entry Path
 
-The Cloudflare Worker does not serve the web UI from the root path `/`; direct root visits return 404. The web UI is only available under the configured entry path. The default path is:
+The Cloudflare Worker uses an environment variable to protect the web entry path. With the default `wrangler.toml`, direct root visits to `/` return 404 and the web UI is available at:
 
 ```text
 /nodecrypt/
 ```
 
-To change it, set this Cloudflare Worker environment variable:
+To change it, set this Cloudflare Worker environment variable without slashes:
 
 ```text
-NODECRYPT_WEB_PATH=/your-secret-path
+NODECRYPT_WEB_PATH=your-secret-path
 ```
 
-Then visit `https://your-domain/your-secret-path/`. Static assets and WebSocket connections follow the same path. Requests outside the configured path return 404.
+Then visit `https://your-domain/your-secret-path/`. Static assets and WebSocket connections follow the same path. Requests outside the configured path return 404. If `NODECRYPT_WEB_PATH` is removed, the web UI is served directly from the root path `/`.
 
 ## 📝 Project Introduction
 

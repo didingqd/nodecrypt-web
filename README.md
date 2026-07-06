@@ -14,19 +14,19 @@
 
 ### 访问路径鉴权
 
-Cloudflare Worker 默认不会在根路径 `/` 展示网页，直接访问根路径会返回 404。网页端只允许通过配置的入口路径访问，默认入口为：
+Cloudflare Worker 默认通过环境变量限制网页入口路径，直接访问根路径 `/` 会返回 404。当前 `wrangler.toml` 默认入口为：
 
 ```text
 /nodecrypt/
 ```
 
-如需更换入口路径，可在 Cloudflare Worker 环境变量中设置：
+如需更换入口路径，可在 Cloudflare Worker 环境变量中设置，变量值不要加斜杠：
 
 ```text
-NODECRYPT_WEB_PATH=/your-secret-path
+NODECRYPT_WEB_PATH=your-secret-path
 ```
 
-设置后请通过 `https://你的域名/your-secret-path/` 访问。页面资源和 WebSocket 连接都会跟随该路径；未命中正确路径的页面访问和 WebSocket 请求都会返回 404。
+设置后请通过 `https://你的域名/your-secret-path/` 访问。页面资源和 WebSocket 连接都会跟随该路径；未命中正确路径的页面访问和 WebSocket 请求都会返回 404。若删除 `NODECRYPT_WEB_PATH` 环境变量，则恢复为根路径 `/` 直接访问。
 
 ## 📝 项目简介
 
