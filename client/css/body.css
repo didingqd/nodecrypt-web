@@ -48,8 +48,7 @@ body {
 }
 
 /* 帮助按钮样式 / Help Button Styles */
-.help-btn,
-.login-settings-btn {
+.help-btn {
 	position: absolute;
 	top: 16px;
 	right: 16px;
@@ -67,14 +66,8 @@ body {
 	z-index: 10;
 }
 
-.login-settings-btn {
-	left: 16px;
-	right: auto;
-}
-
 /* 控制翻转时按钮的可见性 */
-.flip-card-inner.flipped .flip-card-front .help-btn,
-.flip-card-inner.flipped .flip-card-front .login-settings-btn {
+.flip-card-inner.flipped .flip-card-front .help-btn {
 	visibility: hidden;
 	opacity: 0;
 	pointer-events: none;
@@ -86,16 +79,14 @@ body {
 	pointer-events: none;
 }
 
-.help-btn:hover,
-.login-settings-btn:hover {
+.help-btn:hover {
 	background: #30a8f7;
 	border-color: #30a8f7;
 	color: #fff;
 	transform: scale(1.1);
 }
 
-.help-btn:active,
-.login-settings-btn:active {
+.help-btn:active {
 	transform: scale(0.95);
 }
 

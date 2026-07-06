@@ -35,6 +35,7 @@ export function setupEmojiPicker({
 		// 监听 emoji 点击事件
 		picker.addEventListener('emoji-click', event => {
 			insertEmoji(input, event.detail.unicode);
+			hidePickerWithAnimation();
 		});
 		
 		function showPickerWithAnimation() {
