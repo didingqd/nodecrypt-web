@@ -151,6 +151,8 @@ function handleShareAction() {
 // 处理退出操作
 function handleExitAction() {
 	try {
+		const shouldExit = window.confirm(t('system.confirm_exit_chat', 'Exit this chat? All current messages will be destroyed and you will return to the room entry page.'));
+		if (!shouldExit) return;
 		const result = exitRoom();
 		if (!result) {
 			location.reload();

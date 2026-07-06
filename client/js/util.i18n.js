@@ -87,6 +87,7 @@ const LANGUAGES = {
 					// System messages
 			'system.security_warning': '⚠️ This link uses an old format. Room data is not encrypted.',
 			'system.file_send_failed': 'Failed to send files:',
+			'system.confirm_exit_chat': 'Exit this chat? All current messages will be destroyed and you will return to the room entry page.',
 			'system.joined': 'joined the conversation',
 			'system.left': 'left the conversation',
 			'system.secured': 'connection secured',
@@ -212,6 +213,7 @@ const LANGUAGES = {
 					// System messages
 			'system.security_warning': '⚠️ 此链接使用旧格式，房间数据未加密。',
 			'system.file_send_failed': '文件发送失败：',
+			'system.confirm_exit_chat': '确定退出当前聊天吗？退出后当前所有消息将销毁，并返回进入新房间页面。',
 			'system.joined': '加入了对话',
 			'system.left': '离开了对话',
 			'system.secured': '已建立端到端安全连接',
