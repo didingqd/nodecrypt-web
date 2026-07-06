@@ -145,13 +145,15 @@ window.addEventListener('DOMContentLoaded', () => {
 	// updateStaticTexts(); // 在初始化设置后更新静态文本 / Update static texts after initializing settings
 	initTheme(); // 初始化主题 / Initialize theme
 	
-	const settingsBtn = $id('settings-btn'); // 设置按钮 / Settings button
-	if (settingsBtn) {
-		settingsBtn.onclick = (e) => {
+	const bindSettingsButton = btn => {
+		if (!btn) return;
+		btn.onclick = (e) => {
 			e.stopPropagation();  // 阻止事件冒泡 / Stop event from bubbling
 			openSettingsPanel(); // 打开设置面板 / Open settings panel
-		}
-	}
+		};
+	};
+	bindSettingsButton($id('settings-btn'));
+	bindSettingsButton($id('login-settings-btn'));
 
 	// 设置返回按钮事件处理 / Settings back button event handler
 	const settingsBackBtn = $id('settings-back-btn');
@@ -273,7 +275,18 @@ window.addEventListener('DOMContentLoaded', () => {
 	// Add click event for send button
 	const sendButton = document.querySelector('.send-message-btn');
 	if (sendButton) {
-		sendButton.addEventListener('click', sendMessage);
+		sendButton.addEventListener('pointerdown', e => {
+			e.preventDefault();
+		});
+		sendButton.addEventListener('mousedown', e => {
+			e.preventDefault();
+		});
+		sendButton.addEventListener('click', e => {
+			e.preventDefault();
+			e.stopPropagation();
+			sendMessage();
+			if (input) input.focus();
+		});
 	}
 	
 	// 设置发送文件功能
